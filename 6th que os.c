@@ -1,62 +1,79 @@
-#include<stdio.h> 
-#include<conio.h> 
-int main() 
-{ 
- int i, NOP, sum=0,count=0, y, quant, wt=0, tat=0, at[10], bt[10], temp[10]; 
- float avg_wt, avg_tat; 
- printf(" Total number of process in the system: "); 
- scanf("%d", &NOP); 
- y = NOP; 
-for(i=0; i<NOP; i++) 
-{ 
-printf("\n Enter the Arrival and Burst time of the Process[%d]\n", i+1); 
-printf(" Arrival time is: \t"); 
-scanf("%d", &at[i]); 
-printf(" \nBurst time is: \t"); 
-scanf("%d", &bt[i]); 
-temp[i] = bt[i]; 
-} 
-printf("Enter the Time Quantum for the process: \t"); 
-scanf("%d", &quant); 
-printf("\n Process No \t\t Burst Time \t\t TAT \t\t Waiting Time "); 
-for(sum=0, i = 0; y!=0; ) 
-{ 
-if(temp[i] <= quant && temp[i] > 0) 
-{ 
- sum = sum + temp[i]; 
- temp[i] = 0; 
- count=1; 
- } 
- else if(temp[i] > 0) 
- { 
- temp[i] = temp[i] - quant; 
- sum = sum + quant; 
- } 
- if(temp[i]==0 && count==1) 
- { 
- y--; 
- printf("\nProcess No[%d] \t\t %d\t\t\t\t %d\t\t\t %d", i+1, bt[i], sum-at[i], sum-at[i]-
-bt[i]); 
- wt = wt+sum-at[i]-bt[i]; 
- tat = tat+sum-at[i]; 
- count =0; 
- } 
- if(i==NOP-1) 
- { 
- i=0; 
- } 
- else if(at[i+1]<=sum) 
- { 
- i++; 
- } 
- else 
- { 
- i=0; 
- } 
-} 
-avg_wt = wt * 1.0/NOP; 
-avg_tat = tat * 1.0/NOP; 
-printf("\n Average Turn Around Time: \t%f", avg_wt); 
-printf("\n Average Waiting Time: \t%f", avg_tat); 
-getch(); 
-} 
+#include <stdlib.h>
+
+struct process {
+    int pid;
+    int burst_time;
+    int priority;
+    int waiting_time;
+    int turnaround_time;
+    int remaining_time;
+    int arrival_time;
+};
+
+void swap(struct process *a, struct process *b) {
+    struct process temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main() {
+    int n, i, j, time = 0, total_waiting_time = 0, total_turnaround_time = 0;
+    float avg_waiting_time, avg_turnaround_time;
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    struct process *processes = (struct process *)malloc(n * sizeof(struct process));
+
+    for (i = 0; i < n; i++) {
+        printf("Enter the arrival time, burst time and priority of process %d: ", i + 1);
+        scanf("%d%d%d", &processes[i].arrival_time, &processes[i].burst_time, &processes[i].priority);
+        processes[i].pid = i + 1;
+        processes[i].remaining_time = processes[i].burst_time;
+    }
+
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (processes[i].arrival_time > processes[j].arrival_time) {
+                swap(&processes[i], &processes[j]);
+            }
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (processes[i].arrival_time == processes[j].arrival_time && processes[i].priority < processes[j].priority) {
+                swap(&processes[i], &processes[j]);
+            }
+        }
+    }
+
+    printf("\nProcess\tBurst Time\tPriority\tWaiting Time\tTurnaround Time\n");
+
+    for (i = 0; i < n; i++) {
+        while (processes[i].remaining_time > 0) {
+            printf("P%d\t%d\t\t%d\t\t%d\t\t%d\n", processes[i].pid, processes[i].burst_time, processes[i].priority, processes[i].waiting_time, processes[i].turnaround_time);
+            processes[i].remaining_time--;
+            time++;
+
+            for (j = 0; j < n; j++) {
+                if (processes[j].arrival_time <= time && processes[j].remaining_time > 0 && processes[j].priority > processes[i].priority) {
+                    processes[i].waiting_time++;
+                    break;
+                }
+            }
+        }
+
+        processes[i].turnaround_time = processes[i].burst_time + processes[i].waiting_time;
+        total_waiting_time += processes[i].waiting_time;
+        total_turnaround_time += processes[i].turnaround_time;
+    }
+
+    avg_waiting_time = (float)total_waiting_time / n;
+    avg_turnaround_time = (float)total_turnaround_time / n;
+
+    printf("\nAverage Waiting Time: %.2f", avg_waiting_time);
+    printf("\nAverage Turnaround Time: %.2f", avg_turnaround_time);
+
+    return 0;
+}
